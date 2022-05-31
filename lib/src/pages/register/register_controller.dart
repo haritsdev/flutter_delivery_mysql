@@ -1,10 +1,17 @@
+import 'dart:io';
+import 'dart:math';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:sn_progress_dialog/progress_dialog.dart';
 import 'package:udemy_flutter_delivery/src/models/user.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:udemy_flutter_delivery/src/models/response.dart';
 import 'package:udemy_flutter_delivery/src/providers/users_provider.dart';
 
 class RegisterController extends GetxController {
-
   TextEditingController emailController = TextEditingController();
   TextEditingController nameController = TextEditingController();
   TextEditingController lastnameController = TextEditingController();
@@ -13,8 +20,10 @@ class RegisterController extends GetxController {
   TextEditingController confirmPasswordController = TextEditingController();
 
   UsersProvider usersProvider = UsersProvider();
+  ImagePicker picker = ImagePicker();
+  File? imageFile;
 
-  void register() async {
+  void register(BuildContext context) async {
     String email = emailController.text.trim();
     String name = nameController.text;
     String lastname = lastnameController.text;
@@ -26,6 +35,8 @@ class RegisterController extends GetxController {
     print('Password ${password}');
 
     if (isValidForm(email, name, lastname, phone, password, confirmPassword)) {
+      ProgressDialog progressDialog = ProgressDialog(context: context);
+      progressDialog.show(max: 100, msg: 'Register data');
 
       User user = User(
         email: email,
@@ -35,23 +46,27 @@ class RegisterController extends GetxController {
         password: password,
       );
 
-      Response response = await usersProvider.create(user);
-
-      print('RESPONSE: ${response.body}');
-
-      Get.snackbar('Formulario valido', 'Estas listo para enviar la peticion Http');
+      Stream stream = await usersProvider.registerWithImage(user, imageFile!);
+      stream.listen((res) {
+        ResponseApi responseApi = ResponseApi.fromJson(json.decode(res));
+        progressDialog.close();
+        if (responseApi.success == true) {
+          GetStorage().write('user', responseApi.data);
+          Get.snackbar('Register berhasi;', responseApi.message ?? '');
+          goToHomePage();
+        } else {
+          Get.snackbar('Register gagal', responseApi.message ?? '');
+        }
+      });
     }
   }
 
-  bool isValidForm(
-      String email,
-      String name,
-      String lastname,
-      String phone,
-      String password,
-      String confirmPassword
-  ) {
+  void goToHomePage() {
+    Get.offNamedUntil('/home', (route) => false);
+  }
 
+  bool isValidForm(String email, String name, String lastname, String phone,
+      String password, String confirmPassword) {
     if (email.isEmpty) {
       Get.snackbar('Formulario no valido', 'Debes ingresar el email');
       return false;
@@ -73,7 +88,8 @@ class RegisterController extends GetxController {
     }
 
     if (phone.isEmpty) {
-      Get.snackbar('Formulario no valido', 'Debes ingresar tu numero telefonico');
+      Get.snackbar(
+          'Formulario no valido', 'Debes ingresar tu numero telefonico');
       return false;
     }
 
@@ -83,7 +99,8 @@ class RegisterController extends GetxController {
     }
 
     if (confirmPassword.isEmpty) {
-      Get.snackbar('Formulario no valido', 'Debes ingresar la confirmacion del password');
+      Get.snackbar('Formulario no valido',
+          'Debes ingresar la confirmacion del password');
       return false;
     }
 
@@ -92,7 +109,49 @@ class RegisterController extends GetxController {
       return false;
     }
 
+    if (imageFile == null) {
+      Get.snackbar('Formulario no valido', 'Image harus di isis');
+      return false;
+    }
+
     return true;
   }
 
+  Future selectImage(ImageSource imageSource) async {
+    XFile? image = await picker.pickImage(source: imageSource);
+    if (image != null) {
+      imageFile = File(image.path);
+      update();
+    }
+  }
+
+  void showAlertDialog(BuildContext context) {
+    Widget galleryButton = ElevatedButton(
+        onPressed: () {
+          Get.back();
+          selectImage(ImageSource.gallery);
+        },
+        child: const Text(
+          'GALERIA',
+          style: TextStyle(color: Colors.white),
+        ));
+
+    Widget cameraButton = ElevatedButton(
+        onPressed: () {
+          Get.back();
+          selectImage(ImageSource.camera);
+        },
+        child: Text('CAMERA'));
+
+    AlertDialog alertDialog = AlertDialog(
+      title: const Text('Pilih opsi berikut'),
+      actions: [galleryButton, cameraButton],
+    );
+
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return alertDialog;
+        });
+  }
 }

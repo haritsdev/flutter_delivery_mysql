@@ -1,11 +1,13 @@
 import 'dart:convert';
 
+import 'package:udemy_flutter_delivery/src/models/Role.dart';
+
 User userFromJson(String str) => User.fromJson(json.decode(str));
 
 String userToJson(User data) => json.encode(data.toJson());
 
 class User {
-  int? id; //NULL SAFETY
+  String? id; //NULL SAFETY
   String? email;
   String? name;
   String? lastname;
@@ -13,6 +15,7 @@ class User {
   String? image;
   String? password;
   String? sessionToken;
+  List<Role>? roles = [];
 
   User(
       {this.id,
@@ -22,7 +25,8 @@ class User {
       this.phone,
       this.image,
       this.password,
-      this.sessionToken});
+      this.sessionToken,
+      this.roles});
 
   factory User.fromJson(Map<String, dynamic> json) => User(
       id: json["id"],
@@ -32,7 +36,11 @@ class User {
       phone: json["phone"],
       image: json["image"],
       password: json["password"],
-      sessionToken: json["session_token"]);
+      sessionToken: json["session_token"],
+      roles: json["roles"] == null
+          ? []
+          : List<Role>.from(
+              json["roles"].map((model) => Role.fromJson(model))));
 
   Map<String, dynamic> toJson() => {
         "id": id,
@@ -42,6 +50,7 @@ class User {
         "phone": phone,
         "image": image,
         "password": password,
-        "sessionToken": sessionToken,
+        "session_oken": sessionToken,
+        "roles": roles
       };
 }

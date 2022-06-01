@@ -14,7 +14,10 @@ class HomePage extends StatelessWidget {
                 onPressed: () {
                   con.signOut();
                 },
-                child: Text('Logout'))),
+                child: const Text(
+                  'Logout',
+                  style: TextStyle(color: Colors.black),
+                ))),
       ),
     );
   }

@@ -71,6 +71,7 @@ class UsersProvider extends GetConnect {
     }
 
     ResponseApi responseApi = ResponseApi.fromJson(response.body);
+    print(responseApi.toString());
     return responseApi;
   }
 }

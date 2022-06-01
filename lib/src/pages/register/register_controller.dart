@@ -52,10 +52,12 @@ class RegisterController extends GetxController {
         progressDialog.close();
         if (responseApi.success == true) {
           GetStorage().write('user', responseApi.data);
+          print("MENYIMPAN DATA USER");
+          print(responseApi.data);
           Get.snackbar('Register berhasi;', responseApi.message ?? '');
           goToHomePage();
         } else {
-          Get.snackbar('Register gagal', responseApi.message ?? '');
+          Get.snackbar(responseApi.message!, responseApi.message ?? '');
         }
       });
     }
